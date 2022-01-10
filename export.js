@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name             豆瓣读书+电影+音乐+游戏+舞台剧导出工具
 // @namespace        https://ulyc.github.io/
-// @version          0.1.0
-// @description      将读过/看过/听过/玩过的读书/电影/音乐/游戏/舞台剧条目分别导出为 csv 文件
+// @version          0.1.1
+// @description      将【读过/看过/听过/玩过】的 【读书/电影/音乐/游戏/舞台剧】条目分别导出为 csv 文件
 // @author           ulyc
 // @match            https://book.douban.com/people/*/collect*
 // @match            https://movie.douban.com/people/*/collect*
@@ -18,7 +18,9 @@
 
 (function () {
     'use strict';
-    var MOVIE = 'movie', BOOK = 'book', MUSIC = 'music', GAME = 'game', DRAMA = 'drama', people;
+    let MOVIE = 'movie', BOOK = 'book', MUSIC = 'music', GAME = 'game', DRAMA = 'drama', people;
+    const commonItem = "++id, cover, title, rating, rating_date, comment,";
+
     /* global $, Dexie */
 
     function getExportLink(type, people) {
@@ -29,45 +31,89 @@
         return 'https://www.douban.com/people/' + people + '/games?action=collect&start=0&export=1';
     }
 
-    function getDramaExportLink(people) { // type=game
+    function getDramaExportLink(people) { // type=drama
         return 'https://www.douban.com/location/people/' + people + '/drama/collect?start=0&sort=time&mode=grid&rating=all&export=1';
     }
 
-    if (location.href.indexOf('//www.douban.com/people/') > -1) {
-        // 加入导出按钮
-        let match = location.href.match(/www\.douban\.com\/people\/([^/]+)\//);
+
+    function addButton(type, people, isGeneral) {
+        let typeElement;
+        if (isGeneral) {
+            typeElement = $('#' + type + ' h2 .pl a:last');
+        } else {
+            typeElement = $('#db-' + type + '-mine h2:contains(过)  .pl');
+        }
+        switch (type) {
+            case BOOK:
+                typeElement.after('&nbsp;·&nbsp;<a href="' + getExportLink(type, people) + '">导出读过的书</a>');
+                break;
+            case MOVIE:
+                typeElement.after('&nbsp;·&nbsp;<a href="' + getExportLink(type, people) + '">导出看过的片</a>');
+                break;
+            case MUSIC:
+                typeElement.after('&nbsp;·&nbsp;<a href="' + getExportLink(type, people) + '">导出听过的碟</a>');
+                break;
+            case GAME:
+                typeElement.after('&nbsp;·&nbsp;<a href="' + getGameExportLink(people) + '">导出玩过的游戏</a>');
+                break;
+            case DRAMA:
+                typeElement.after('&nbsp;·&nbsp;<a href="' + getDramaExportLink(people) + '">导出看过的舞台剧</a>');
+                break;
+            default:
+                return;
+        }
+    }
+
+    function getType() {
+        let type = location.hostname.split(".")[0];
+
+        if (type === "www") {
+            if (location.pathname.indexOf('games') > -1) {
+                type = GAME;
+            }
+            if (location.pathname.indexOf('drama') > -1) {
+                type = DRAMA;
+            }
+        }
+        return type;
+    }
+
+    // 根据hostname判断type
+    // 加入导出按钮
+    if (location.href.indexOf('douban.com') > -1 && location.href.indexOf('export=1') < 0) {
+        let match;
+        let type = getType();
+        if (type === DRAMA) {
+            match = location.pathname.match(/location\/people\/([^/]+)\//);
+        } else {
+            match = location.pathname.match(/people\/([^/]+)\//);
+        }
         people = match ? match[1] : null;
-        $('#book h2 .pl a:last').after('&nbsp;·&nbsp;<a href="' + getExportLink(BOOK, people) + '">导出读过的书</a>');
-        $('#movie h2 .pl a:last').after('&nbsp;·&nbsp;<a href="' + getExportLink(MOVIE, people) + '">导出看过的片</a>');
-        $('#music h2 .pl a:last').after('&nbsp;·&nbsp;<a href="' + getExportLink(MUSIC, people) + '">导出听过的碟</a>');
-        $('#game h2 .pl a:last').after('&nbsp;·&nbsp;<a href="' + getGameExportLink(people) + '">导出玩过的游戏</a>');
-        $('#drama h2 .pl a:last').after('&nbsp;·&nbsp;<a href="' + getDramaExportLink(people) + '">导出看过的舞台剧</a>');
+        if (!people) {
+            return
+        }
+
+        if (type === "www") {
+            addButton(BOOK, people, true);
+            addButton(MOVIE, people, true);
+            addButton(MUSIC, people, true);
+            addButton(GAME, people, true);
+            addButton(DRAMA, people, true);
+        } else {
+            addButton(type, people, false);
+        }
     }
 
-    if (location.href.indexOf('//www.douban.com/location/people/') > -1) { // for drama link
-        let match = location.href.match(/www\.douban\.com\/location\/people\/([^/]+)\//);
-        people = match ? match[1] : null;
+    if (location.href.indexOf('export=1') > -1) {
+        let type = getType();
+        if ([DRAMA, GAME, BOOK, MUSIC, MOVIE].indexOf(type) < 0) {
+            alert("类型错误，请检查路径")
+            return;
+        }
+
+        init(type);
     }
 
-    if (location.href.indexOf('//book.douban.com/') > -1 && location.href.indexOf('export=1') > -1) {
-        init(BOOK);
-    }
-
-    if (location.href.indexOf('//movie.douban.com/') > -1 && location.href.indexOf('export=1') > -1) {
-        init(MOVIE);
-    }
-
-    if (location.href.indexOf('//music.douban.com/') > -1 && location.href.indexOf('export=1') > -1) {
-        init(MUSIC);
-    }
-
-    if (people && location.href.indexOf('//www.douban.com/people/' + people + '/games') > -1 && location.href.indexOf('export=1') > -1) {
-        init(GAME);
-    }
-
-    if (people && location.href.indexOf('//www.douban.com/location/people/' + people + '/drama') > -1 && location.href.indexOf('export=1') > -1) {
-        init(DRAMA);
-    }
 
     function escapeQuote(str) {
         return str.replaceAll('"', '""'); // " need to be replaced with two quotes to escape inside csv quoted string
@@ -76,68 +122,87 @@
     // 获取当前页数据
     function getCurPageItems(type) {
         var items = [];
-
         var elems = $('.grid-view .item');
 
         if (type === GAME) {
             elems = $('.game-list .common-item');
+        } else if (type === BOOK) {
+            elems = $('.interest-list .subject-item');
         }
 
-        elems.each(function(index) {
-            var item = {
-                title: escapeQuote($(this).find('.title a').text().trim()),
-                link: $(this).find('.title a').attr('href').trim(),
+        elems.each(function (index) {
+            let item = {
                 cover: escapeQuote($(this).find('.pic img').attr('src').trim()),
                 'rating_date': $(this).find('.date').text().trim().replaceAll('-', '/'), // 2020-07-17 => 2020/07/17
             };
+
+            getTitleAndLink($(this),item, type);
+            getRate($(this),item, type);
+            getComment($(this),item, type);
+            getExtraInfo($(this),item, type, index);
+        });
+        return items;
+
+        function getTitleAndLink(elem,item, type) {
+            if (type === BOOK) {
+                item.title = escapeQuote(elem.find('.info a').attr("title").trim());
+                item.link = elem.find('.info a').attr("href").trim();
+            } else {
+                item.title =escapeQuote(elem.find('.title a').text().trim());
+                item.link =elem.find('.title a').attr('href').trim();
+            }
+        }
+
+        function getRate(elem,item, type) {
+            // 获取 评分
             if (type === GAME) {
-                let rating = $(this).find('.rating-info .rating-star').attr('class');
+                let rating = elem.find('.rating-info .rating-star').attr('class');
                 rating = rating
                     ? (rating.slice(19, 20) === 'N' ? '' : Number(rating.slice(19, 20)))
                     : '';
                 item.rating = rating;
-
             } else {
-                let rating = $(this).find('.date')[0].previousElementSibling;
+                let rating = elem.find('.date')[0].previousElementSibling;
                 if (rating) {
                     rating = $(rating).attr('class').slice(6, 7);
                 }
                 item.rating = rating ? Number(rating) : '';
-
             }
+        }
 
-            var co = $(this).find('.comment');
+        function getComment(elem,item, type) {
+            let co = elem.find('.comment');
             if (co.length) {
                 co = co[0];
-                item.comment = escapeQuote( co.textContent.trim());
-
+                item.comment = escapeQuote(co.textContent.trim());
             } else if (type === GAME) {
-                co = $(this).find('.user-operation');
+                co = elem.find('.user-operation');
                 if (co.length) {
                     co = co[0];
                     item.comment = co.previousElementSibling.textContent.trim();
                     item.comment = escapeQuote(item.comment);
                 }
             } else if (type === DRAMA || type === MUSIC) {
-                co = $(this).find('ul li:last');
+                co = elem.find('ul li:last');
                 item.comment = escapeQuote(co.text().trim());
             }
+        }
 
+        function getExtraInfo(elem,item, type, index) {
+            let extra;
             if (type === GAME) {
-                let extra = $(this).find('.desc')[0].firstChild.textContent.trim();
+                extra = elem.find('.desc')[0].firstChild.textContent.trim();
                 item.release_date = extra.split(' / ').slice(-1)[0];
                 items[index] = item;
                 return; // for type=game, here is over
-            }
-
-            if (type === DRAMA) {
-                let extra = $(this).find('.intro')[0].textContent.trim();
+            } else if (type === DRAMA) {
+                extra = elem.find('.intro')[0].textContent.trim();
                 item.mixed_info = extra;
                 items[index] = item;
                 return; // for type=drama, here is over
             }
 
-            var intro = $(this).find('.intro').text().split(' / ');
+            let intro = elem.find('.intro').text().split(' / ');
             if (intro.length) {
                 if (type === MOVIE) {
                     intro = intro[0];
@@ -156,45 +221,50 @@
                             item.musician = escapeQuote(intro[0]);
                         }
                     }
-                    var d = intro.filter(function(txt) {return dateReg.test(txt);});
+                    var d = intro.filter(function (txt) {
+                        return dateReg.test(txt);
+                    });
                     if (d.length) {
                         item.release_date = d[0].replaceAll('-', '/');
                     }
                 }
             }
-
             items[index] = item;
-        });
+        }
 
+    }
+
+    function getDBItems(type) {
+        let items;
+        switch (type) {
+            case MOVIE:
+                items = commonItem + ' release_date, country, link';
+                break;
+            case MUSIC:
+                items = commonItem + ' release_date, author, link';
+                break;
+            case BOOK:
+                items = commonItem + ' release_date, author, link';
+                break;
+            case GAME:
+                items = commonItem + ' release_date, link';
+                break;
+            case DRAMA:
+                items = commonItem + ' mixed_info, link';
+                break;
+        }
         return items;
     }
 
     function init(type) {
         const db = new Dexie('db_export'); // init indexedDB
-        if (type === MOVIE) {
-            db.version(1).stores({
-                items: '++id, cover, title, rating, rating_date, comment, release_date, country, link',
-            });
-        } else if (type === BOOK) {
-            db.version(1).stores({
-                items: '++id, cover, title, rating, rating_date, comment, release_date, author, link',
-            });
-        } else if (type === MUSIC) {
-            db.version(1).stores({
-                items: '++id, cover, title, rating, rating_date, comment, release_date, musician, link',
-            });
-        } else if (type === GAME) {
-            db.version(1).stores({
-                items: '++id, cover, title, rating, rating_date, comment, release_date, link',
-            });
-        } else if (type === DRAMA) {
-            db.version(1).stores({
-                items: '++id, cover, title, rating, rating_date, comment, mixed_info, link',
-            });
-        }
+        let dbItems = getDBItems(type);
+        db.version(1).stores({
+            items: dbItems
+        });
 
         const items = getCurPageItems(type);
-        db.items.bulkAdd(items).then(function() {
+        db.items.bulkAdd(items).then(function () {
             console.log('添加成功+', items.length);
 
             let nextPageLink = $('.paginator span.next a').attr('href');
@@ -211,36 +281,19 @@
 
     function exportAll(type) {
         const db = new Dexie('db_export');
-        if (type === MOVIE) {
-            db.version(1).stores({
-                items: '++id, cover, title, rating, rating_date, comment, release_date, country, link',
-            });
-        } else if (type === BOOK) {
-            db.version(1).stores({
-                items: '++id, cover, title, rating, rating_date, comment, release_date, author, link',
-            });
-        } else if (type === MUSIC) {
-            db.version(1).stores({
-                items: `++id, cover, title, rating, rating_date, comment, release_date, musician, link`,
-            });
-        } else if (type === GAME) {
-            db.version(1).stores({
-                items: '++id, cover, title, rating, rating_date, comment, release_date, link',
-            });
-        } else if (type === DRAMA) {
-            db.version(1).stores({
-                items: '++id, cover, title, rating, rating_date, comment, mixed_info, link',
-            });
-        }
+        let items = getDBItems(type);
 
-        db.items.orderBy('rating_date').reverse().toArray().then(function(all) {
-            all = all.map(function(item) {
+        db.version(1).stores({
+            items: items
+        });
+        db.items.orderBy('rating_date').reverse().toArray().then(function (all) {
+            all = all.map(function (item) {
                 delete item.id;
                 return item;
             });
 
-            let title = ['封面','标题', '个人评分', '打分日期', '我的短评'];
-            let key = ['cover','title', 'rating', 'rating_date', 'comment', 'release_date'];
+            let title = ['封面', '标题', '个人评分', '打分日期', '我的短评'];
+            let key = ['cover', 'title', 'rating', 'rating_date', 'comment', 'release_date'];
             if (type === MOVIE) {
                 title = title.concat(['上映日期', '制片国家', '条目链接']);
                 key = key.concat(['country', 'link']);
@@ -368,7 +421,7 @@
             var Sys = {};
             var ua = navigator.userAgent.toLowerCase();
             var s;
-            (s = ua.indexOf('edge') !== -1 ? Sys.edge = 'edge' : ua.match(/rv:([\d.]+)\) like gecko/)) ? Sys.ie = s[1]:
+            (s = ua.indexOf('edge') !== -1 ? Sys.edge = 'edge' : ua.match(/rv:([\d.]+)\) like gecko/)) ? Sys.ie = s[1] :
                 (s = ua.match(/msie ([\d.]+)/)) ? Sys.ie = s[1] :
                     (s = ua.match(/firefox\/([\d.]+)/)) ? Sys.firefox = s[1] :
                         (s = ua.match(/chrome\/([\d.]+)/)) ? Sys.chrome = s[1] :
