@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name             豆瓣读书+电影+音乐+游戏+舞台剧导出工具
-// @namespace        https://www.douban.com/people/MoNoMilky/
+// @namespace        https://ulyc.github.io/
 // @version          0.1.0
 // @description      将读过/看过/听过/玩过的读书/电影/音乐/游戏/舞台剧条目分别导出为 csv 文件
 // @author           ulyc
@@ -21,8 +21,7 @@
     var MOVIE = 'movie', BOOK = 'book', MUSIC = 'music', GAME = 'game', DRAMA = 'drama', people;
     /* global $, Dexie */
 
-    function getExportLink(type, people) { // type=book/movie/music
-        // return 'https://' + type + '.douban.com/people/' + people + '/collect?start=0&sort=time&rating=all&filter=all&mode=list&export=1';
+    function getExportLink(type, people) {
         return 'https://' + type + '.douban.com/people/' + people + '/collect?start=0&sort=time&mode=grid&rating=all&export=1';
     }
 
@@ -78,15 +77,11 @@
     function getCurPageItems(type) {
         var items = [];
 
-        // var elems = $('li.item');
         var elems = $('.grid-view .item');
 
         if (type === GAME) {
             elems = $('.game-list .common-item');
         }
-        // else if (type === DRAMA) {
-        //     elems = $('.grid-view .item');
-        // }
 
         elems.each(function(index) {
             var item = {
@@ -110,20 +105,12 @@
                 item.rating = rating ? Number(rating) : '';
 
             }
-            // else {
-            //     item.rating = ($(this).find('.date span').attr('class')) ? $(this).find('.date span').attr('class').slice(6, 7) : '';
-            // }
 
             var co = $(this).find('.comment');
             if (co.length) {
                 co = co[0];
-                // if (type === MOVIE) {
-                //     // 电影条目在 collect 页面显示了有用数，eg “（1有用）”，所以需要单独提取 childNode 进行 trim，否则结果的 csv 里包含大量多余空格空行，很容易处理错误
-                //     item.comment = co.firstChild.textContent.trim() + (co.firstElementChild ? co.firstElementChild.textContent.trim() : '');
-                // } else { // 图书及音乐条目没有显示 有用数
                 item.comment = escapeQuote( co.textContent.trim());
-                // }
-                // item.comment = escapeQuote(item.comment);
+
             } else if (type === GAME) {
                 co = $(this).find('.user-operation');
                 if (co.length) {
@@ -132,15 +119,8 @@
                     item.comment = escapeQuote(item.comment);
                 }
             } else if (type === DRAMA || type === MUSIC) {
-                // 错误
-                // drama /music  li 标签
                 co = $(this).find('ul li:last');
-                // if (co.length) {
-                //     co = co[0].previousElementSibling;
-                //     if ($(co).find('.date').length === 0) {
                 item.comment = escapeQuote(co.text().trim());
-                //     }
-                // }
             }
 
             if (type === GAME) {
