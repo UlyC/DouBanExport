@@ -204,17 +204,6 @@
 
         function getExtraInfo(elem, item, type, index) {
             let extra;
-            if (type === GAME) {
-                extra = elem.find('.desc')[0].firstChild.textContent.trim();
-                item.release_date = extra.split(' / ').slice(-1)[0];
-                items[index] = item;
-                return; // for type=game, here is over
-            } else if (type === DRAMA) {
-                extra = elem.find('.intro')[0].textContent.trim();
-                item.mixed_info = extra;
-                items[index] = item;
-                return; // for type=drama, here is over
-            }
             switch (type) {
                 case GAME:
                     extra = elem.find('.desc')[0].firstChild.textContent.trim();
@@ -233,7 +222,7 @@
                         item.release_date = res[1].replaceAll('-', '/');
                         item.country = res[2];
                     }
-                    return;
+                    break;
                 case MUSIC:
                 case BOOK:
                     let className = type === BOOK ? 'pub' : 'intro';
