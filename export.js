@@ -133,13 +133,13 @@
         elems.each(function (index) {
             let item = {
                 title: "",
-                rate:5,
-                comment:"",
+                rate: 5,
+                comment: "",
                 cover: escapeQuote($(this).find('.pic img').attr('src').trim()),
                 'rating_date': $(this).find('.date').text().trim().replaceAll('-', '/'), // 2020-07-17 => 2020/07/17
             };
 
-            getTitleAndLink($(this),item, type);
+            getTitleAndLink($(this), item, type);
             //兼容被封图书项目，电影被封项目似乎不展示
             if (item.cover.indexOf("book-default-lpic") > -1 && item.title.indexOf("未知") > -1) {
                 console.log("一个被封禁图书")
@@ -150,25 +150,25 @@
                 item.release_date = "1984/01/01";
                 items[index] = item;
             } else {
-                getRate($(this),item, type);
-                getComment($(this),item, type);
-                getExtraInfo($(this),item, type, index);
+                getRate($(this), item, type);
+                getComment($(this), item, type);
+                getExtraInfo($(this), item, type, index);
             }
 
         });
         return items;
 
-        function getTitleAndLink(elem,item, type) {
+        function getTitleAndLink(elem, item, type) {
             if (type === BOOK) {
                 item.title = escapeQuote(elem.find('.info a').attr("title").trim());
                 item.link = elem.find('.info a').attr("href").trim();
             } else {
-                item.title =escapeQuote(elem.find('.title a').text().trim());
-                item.link =elem.find('.title a').attr('href').trim();
+                item.title = escapeQuote(elem.find('.title a').text().trim());
+                item.link = elem.find('.title a').attr('href').trim();
             }
         }
 
-        function getRate(elem,item, type) {
+        function getRate(elem, item, type) {
             // 获取 评分
             if (type === GAME) {
                 let rating = elem.find('.rating-info .rating-star').attr('class');
@@ -185,7 +185,7 @@
             }
         }
 
-        function getComment(elem,item, type) {
+        function getComment(elem, item, type) {
             let co = elem.find('.comment');
             if (co.length) {
                 co = co[0];
@@ -203,7 +203,7 @@
             }
         }
 
-        function getExtraInfo(elem,item, type, index) {
+        function getExtraInfo(elem, item, type, index) {
             let extra;
             if (type === GAME) {
                 extra = elem.find('.desc')[0].firstChild.textContent.trim();
@@ -216,34 +216,44 @@
                 items[index] = item;
                 return; // for type=drama, here is over
             }
-
-            let intro = elem.find('.intro').text().split(' / ');
-            if (intro.length) {
-                if (type === MOVIE) {
-                    intro = intro[0];
-                    var res = intro.match(/^(\d{4}-\d{2}-\d{2})\((.*)\)$/);
+            switch (type) {
+                case GAME:
+                    extra = elem.find('.desc')[0].firstChild.textContent.trim();
+                    item.release_date = extra.split(' / ').slice(-1)[0];
+                    items[index] = item;
+                    return; // for type=game, here is over
+                case DRAMA:
+                    extra = elem.find('.intro')[0].textContent.trim();
+                    item.mixed_info = extra;
+                    items[index] = item;
+                    return; // for type=drama, here is over
+                case MOVIE:
+                    extra = elem.find('.intro').text().split(' / ')[0];
+                    let res = extra.match(/^(\d{4}-\d{2}-\d{2})\((.*)\)$/);
                     if (res) {
                         item.release_date = res[1].replaceAll('-', '/');
                         item.country = res[2];
                     }
-                } else {
+                    return;
+                case MUSIC:
+                case BOOK:
+                    let className = type === BOOK ? 'pub' : 'intro';
+                    extra = elem.find('.' + className).text().split(' / ');
                     // 不一定有准确日期，可能是 2009-5 这样的, 也可能就只有年份 2000
-                    var dateReg = /\d{4}(?:-\d{1,2})?(?:-\d{1,2})?/;
-                    if (!dateReg.test(intro[0])) { // intro 首项非日期，则一般为作者或音乐家
-                        if (type === BOOK) {
-                            item.author = escapeQuote(intro[0]);
-                        } else if (type === MUSIC) {
-                            item.musician = escapeQuote(intro[0]);
-                        }
+                    let dateReg = /\d{4}(?:-\d{1,2})?(?:-\d{1,2})?/;
+                    if (!dateReg.test(extra[0])) { // extra 首项非日期，则一般为作者或音乐家
+                        let author = escapeQuote(extra[0]);
+                        item.musician = item.author = author;
                     }
-                    var d = intro.filter(function (txt) {
+                    let d = extra.filter(function (txt) {
                         return dateReg.test(txt);
                     });
                     if (d.length) {
                         item.release_date = d[0].replaceAll('-', '/');
                     }
-                }
+                    break;
             }
+
             items[index] = item;
         }
 
