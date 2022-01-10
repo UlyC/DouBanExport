@@ -142,7 +142,6 @@
             getTitleAndLink($(this), item, type);
             //兼容被封图书项目，电影被封项目似乎不展示
             if (item.cover.indexOf("book-default-lpic") > -1 && item.title.indexOf("未知") > -1) {
-                console.log("一个被封禁图书")
                 item.title = "被封禁的图书";
                 item.rate = 5;
                 item.comment = "无";
