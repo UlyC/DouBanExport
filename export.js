@@ -132,14 +132,29 @@
 
         elems.each(function (index) {
             let item = {
+                title: "",
+                rate:5,
+                comment:"",
                 cover: escapeQuote($(this).find('.pic img').attr('src').trim()),
                 'rating_date': $(this).find('.date').text().trim().replaceAll('-', '/'), // 2020-07-17 => 2020/07/17
             };
 
             getTitleAndLink($(this),item, type);
-            getRate($(this),item, type);
-            getComment($(this),item, type);
-            getExtraInfo($(this),item, type, index);
+            //兼容被封图书项目，电影被封项目似乎不展示
+            if (item.cover.indexOf("book-default-lpic") > -1 && item.title.indexOf("未知") > -1) {
+                console.log("一个被封禁图书")
+                item.title = "被封禁的图书";
+                item.rate = 5;
+                item.comment = "无";
+                item.author = "佚名";
+                item.release_date = "1984/01/01";
+                items[index] = item;
+            } else {
+                getRate($(this),item, type);
+                getComment($(this),item, type);
+                getExtraInfo($(this),item, type, index);
+            }
+
         });
         return items;
 
