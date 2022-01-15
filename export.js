@@ -18,7 +18,8 @@
 
 (function () {
     'use strict';
-    let MOVIE = 'movie', BOOK = 'book', MUSIC = 'music', GAME = 'game', DRAMA = 'drama', people;
+    let people;
+    const MOVIE = 'movie', BOOK = 'book', MUSIC = 'music', GAME = 'game', DRAMA = 'drama' ;
     const commonItem = "++id, cover, title, rating, rating_date, comment,";
 
     /* global $, Dexie */
