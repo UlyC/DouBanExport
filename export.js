@@ -233,7 +233,7 @@
                     // 不一定有准确日期，可能是 2009-5 这样的, 也可能就只有年份 2000
                     let dateReg = /\d{4}(?:-\d{1,2})?(?:-\d{1,2})?/;
                     if (!dateReg.test(extra[0])) { // extra 首项非日期，则一般为作者或音乐家
-                        let author = escapeQuote(extra[0]);
+                        let author = escapeQuote(extra[0].trim());
                         item.musician = item.author = author;
                     }
                     let d = extra.filter(function (txt) {
