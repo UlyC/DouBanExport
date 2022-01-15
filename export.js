@@ -159,10 +159,10 @@
 
         function getTitleAndLink(elem, item, type) {
             if (type === BOOK) {
-                item.title = escapeQuote(elem.find('.info a').attr("title").trim());
+                item.title = escapeQuote(elem.find('.info a').attr("title").trim().replace(/\r\n/g,"").replace(/\n/g,""));
                 item.link = elem.find('.info a').attr("href").trim();
             } else {
-                item.title = escapeQuote(elem.find('.title a').text().trim());
+                item.title = escapeQuote(elem.find('.title a').text().trim().replace(/\r\n/g,"").replace(/\n/g,""));
                 item.link = elem.find('.title a').attr('href').trim();
             }
         }
