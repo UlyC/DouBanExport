@@ -160,12 +160,14 @@
 
         function getTitleAndLink(elem, item, type) {
             if (type === BOOK) {
-                item.title = escapeQuote(elem.find('.info a').attr("title").trim().replace(/\r\n/g,"").replace(/\n/g,""));
+                item.title = elem.find('.info a').attr("title");
                 item.link = elem.find('.info a').attr("href").trim();
             } else {
-                item.title = escapeQuote(elem.find('.title a').text().trim().replace(/\r\n/g,"").replace(/\n/g,""));
+                item.title = elem.find('.title a').text();
                 item.link = elem.find('.title a').attr('href').trim();
             }
+            // 处理空格/换行符 ， 优化格式
+            item.title =  escapeQuote(item.title.split("/").trim().replace(/s*/g,"").replace(/\r\n/g,"").replace(/\n/g,""))
         }
 
         function getRate(elem, item, type) {
