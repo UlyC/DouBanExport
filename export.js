@@ -139,7 +139,7 @@
                 cover: escapeQuote($(this).find('.pic img').attr('src').trim()),
                 'rating_date': $(this).find('.date').text().trim().replaceAll('-', '/'), // 2020-07-17 => 2020/07/17
             };
-
+            transWebp2Jpg(item);
             getTitleAndLink($(this), item, type);
             //兼容被封图书项目，电影被封项目似乎不展示
             if (item.cover.indexOf("book-default-lpic") > -1 && item.title.indexOf("未知") > -1) {
@@ -244,6 +244,15 @@
             }
 
             items[index] = item;
+        }
+
+        function transWebp2Jpg(item) {
+            // notion不识别webp格式图片
+            // 将豆瓣webp格式图片 转换为 jpg
+
+            if (!!item.cover && item.cover.endsWith("webp")) {
+                item.cover.replace(".webp", ".jpg")
+            }
         }
 
     }
