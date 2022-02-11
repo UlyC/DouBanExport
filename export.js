@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name             豆瓣读书+电影+音乐+游戏+舞台剧导出工具
 // @namespace        https://ulyc.github.io/
-// @version          0.1.1
+// @version          0.1.2
 // @description      将【读过/看过/听过/玩过】的 【读书/电影/音乐/游戏/舞台剧】条目分别导出为 csv 文件
 // @author           ulyc
 // @match            https://book.douban.com/people/*/collect*
