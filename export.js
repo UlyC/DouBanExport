@@ -13,13 +13,14 @@
 // @grant            none
 // @original-script  https://greasyfork.org/en/scripts/420999-%E8%B1%86%E7%93%A3%E8%AF%BB%E4%B9%A6-%E7%94%B5%E5%BD%B1-%E9%9F%B3%E4%B9%90-%E6%B8%B8%E6%88%8F-%E8%88%9E%E5%8F%B0%E5%89%A7%E5%AF%BC%E5%87%BA%E5%B7%A5%E5%85%B7
 // @original-license MIT
+// @license MIT
 // ==/UserScript==
 
 
 (function () {
     'use strict';
     let people;
-    const MOVIE = 'movie', BOOK = 'book', MUSIC = 'music', GAME = 'game', DRAMA = 'drama' ;
+    const MOVIE = 'movie', BOOK = 'book', MUSIC = 'music', GAME = 'game', DRAMA = 'drama';
     const commonItem = "++id, cover, title, rating, rating_date, comment,";
 
     /* global $, Dexie */
@@ -149,6 +150,13 @@
                 item.author = "佚名";
                 item.release_date = "1984/01/01";
                 items[index] = item;
+            } else if (item.cover.indexOf("lpic/music-default") > -1 && item.title.indexOf("未知") > -1) {
+                item.title = "被封禁的音乐";
+                item.rate = 5;
+                item.comment = "无";
+                item.musician = "佚名";
+                item.release_date = "1984/01/01";
+                items[index] = item;
             } else {
                 getRate($(this), item, type);
                 getComment($(this), item, type);
@@ -167,7 +175,7 @@
                 item.link = elem.find('.title a').attr('href').trim();
             }
             // 处理空格/换行符 ， 优化格式
-            item.title =  escapeQuote(item.title.trim().replace(/\s*/g,"").replace(/\r\n/g,"").replace(/\n/g,""))
+            item.title = escapeQuote(item.title.trim().replace(/\s*/g, "").replace(/\r\n/g, "").replace(/\n/g, ""))
         }
 
         function getRate(elem, item, type) {
