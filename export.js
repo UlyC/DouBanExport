@@ -253,7 +253,7 @@
             // 将豆瓣webp格式图片 转换为 jpg
 
             if (!!item.cover && item.cover.endsWith("webp")) {
-                item.cover.replace(".webp", ".jpg")
+                item.cover = item.cover.replace(".webp", ".jpg")
             }
         }
 
