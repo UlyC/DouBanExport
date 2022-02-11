@@ -167,7 +167,7 @@
                 item.link = elem.find('.title a').attr('href').trim();
             }
             // 处理空格/换行符 ， 优化格式
-            item.title =  escapeQuote(item.title.split("/").trim().replace(/s*/g,"").replace(/\r\n/g,"").replace(/\n/g,""))
+            item.title =  escapeQuote(item.title.trim().replace(/\s*/g,"").replace(/\r\n/g,"").replace(/\n/g,""))
         }
 
         function getRate(elem, item, type) {
